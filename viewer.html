@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CivE265 Fall2025 - Model Viewer</title>
+
+  <style>
+    body { margin:0; overflow:hidden; background:#e0e0e0; font-family: Arial, sans-serif; }
+    #stl_cont { position:absolute; inset:0; width:100%; height:100%; }
+
+    .topbar{
+      position:absolute; top:0; left:0; right:0;
+      display:flex; align-items:center; justify-content:center;
+      padding:14px 16px;
+      z-index:999;
+      pointer-events:none; /* 让鼠标拖拽模型不被挡 */
+    }
+    .title{
+      background: rgba(255,255,255,0.85);
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:700;
+      pointer-events:none;
+    }
+
+    .back-btn{
+      position:absolute; top:18px; left:18px;
+      padding:10px 16px; background:#333; color:#fff;
+      text-decoration:none; border-radius:8px; z-index:1000; font-weight:700;
+    }
+
+    .id-badge{
+      position:absolute; top:18px; right:18px;
+      padding:10px 14px;
+      background: rgba(0,0,0,0.65);
+      color:#fff;
+      border-radius:10px;
+      z-index:1000;
+      font-weight:700;
+    }
+  </style>
+
+  <script src="js/stl_viewer.min.js"></script>
+</head>
+
+<body>
+  <a href="index.html" class="back-btn">← Back</a>
+
+  <div class="topbar">
+    <div class="title">CivE265 Fall2025 - Enjoy your amazing creativity</div>
+  </div>
+
+  <div id="stl_cont"></div>
+  <div id="idBadge" class="id-badge"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const modelId = params.get("model"); // 这里用 ID
+    if (!modelId) {
+      alert("Error: missing parameter ?model=ID");
+      throw new Error("missing model");
+    }
+
+    document.getElementById("idBadge").textContent = `ID: ${modelId}`;
+
+    const stlUrl = `models/${modelId}.stl`;
+
+    (async () => {
+      const res = await fetch(stlUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to fetch STL: ${res.status} ${res.statusText}`);
+
+      const buf = await res.arrayBuffer();
+      const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
+
+      const viewer = new StlViewer(document.getElementById("stl_cont"), {
+        load_three_files: "js/",
+        auto_resize: true,
+        center_models: true,
+        bgcolor: "#e0e0e0",
+        models: [{
+          id: 0,
+          filename: blobUrl,
+          color: "#1e90ff",
+          rotationx: -1.57
+        }],
+        all_loaded_callback: () => {
+          try { viewer.set_auto_zoom(); } catch(e) {}
+        }
+      });
+
+      window.addEventListener("beforeunload", () => URL.revokeObjectURL(blobUrl));
+    })().catch(err => {
+      console.error(err);
+      alert("Failed to load model. Please open Console for details.");
+    });
+  </script>
+</body>
+</html>

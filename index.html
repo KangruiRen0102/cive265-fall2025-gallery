@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CivE265 Fall2025 - STL Gallery</title>
+
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f0f0f0; margin:0; }
+    h1 { text-align:center; margin: 18px 0 26px; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    }
+    .thumb {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #ddd;
+      display:block;
+    }
+    .id-box{
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #f7f7f7;
+      border: 1px solid rgba(0,0,0,0.08);
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>CivE265 Fall2025 - Enjoy your amazing creativity</h1>
+
+  <div class="gallery" id="gallery"></div>
+
+  <!-- 方案A：继续使用 config.js -->
+  <script src="config.js"></script>
+
+  <script>
+    const gallery = document.getElementById('gallery');
+
+    function makeCard(id) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.onclick = () => location.href = `viewer.html?model=${encodeURIComponent(id)}`;
+
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.alt = `ID ${id}`;
+      // 先尝试 png，再 fallback 到 jpg / jpeg
+      img.src = `thumbnails/${id}.png`;
+      img.onerror = () => {
+        if (img.dataset.triedJpg) return;
+        img.dataset.triedJpg = "1";
+        img.src = `thumbnails/${id}.jpg`;
+        img.onerror = () => { img.src = `thumbnails/${id}.jpeg`; };
+      };
+
+      const idBox = document.createElement('div');
+      idBox.className = 'id-box';
+      idBox.textContent = id;
+
+      div.appendChild(img);
+      div.appendChild(idBox);
+      return div;
+    }
+
+    // modelList 来自 config.js
+    modelList.forEach(id => gallery.appendChild(makeCard(id)));
+  </script>
+</body>
+</html>
