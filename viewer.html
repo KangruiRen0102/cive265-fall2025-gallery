@@ -64,7 +64,9 @@
 
     document.getElementById("idBadge").textContent = `ID: ${modelId}`;
 
-    const stlUrl = `models/${modelId}.stl`;
+    const MODEL_BASE = "https://github.com/KangruiRen0102/cive265-fall2025-gallery/releases/download/models-v1";
+    const stlUrl = `${MODEL_BASE}/${modelName}.stl`;
+
 
     (async () => {
       const res = await fetch(stlUrl, { cache: "no-store" });
