@@ -3,78 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CivE265 Fall2025 - Model Viewer</title>
-
+  <title>CivE265 Fall2025 - Enjoy your amazing creativity</title>
   <style>
     body { margin:0; overflow:hidden; background:#e0e0e0; font-family: Arial, sans-serif; }
     #stl_cont { position:absolute; inset:0; width:100%; height:100%; }
 
-    .topbar{
-      position:absolute; top:0; left:0; right:0;
-      display:flex; align-items:center; justify-content:center;
-      padding:14px 16px;
-      z-index:999;
-      pointer-events:none; /* 让鼠标拖拽模型不被挡 */
-    }
-    .title{
-      background: rgba(255,255,255,0.85);
-      padding:10px 14px;
-      border-radius:12px;
-      font-weight:700;
-      pointer-events:none;
-    }
-
     .back-btn{
-      position:absolute; top:18px; left:18px;
-      padding:10px 16px; background:#333; color:#fff;
-      text-decoration:none; border-radius:8px; z-index:1000; font-weight:700;
+      position:absolute; top:20px; left:20px;
+      padding:10px 18px; background:#333; color:#fff;
+      text-decoration:none; border-radius:10px; z-index:999; font-weight:700;
     }
-
-    .id-badge{
-      position:absolute; top:18px; right:18px;
-      padding:10px 14px;
-      background: rgba(0,0,0,0.65);
-      color:#fff;
-      border-radius:10px;
-      z-index:1000;
-      font-weight:700;
+    .title-pill{
+      position:absolute; top:18px; left:50%; transform:translateX(-50%);
+      background:rgba(255,255,255,.7); backdrop-filter: blur(6px);
+      padding:10px 18px; border-radius:14px; z-index:999; font-weight:800;
+    }
+    .id-pill{
+      position:absolute; top:20px; right:20px;
+      padding:10px 16px; background:#333; color:#fff;
+      border-radius:10px; z-index:999; font-weight:800;
+    }
+    .log{
+      position:absolute; left:20px; bottom:20px;
+      width:min(520px, calc(100vw - 40px));
+      background:rgba(0,0,0,.70); color:#fff; padding:12px 14px;
+      border-radius:12px; z-index:999; font-size:12px; line-height:1.35;
+      white-space:pre-wrap;
     }
   </style>
 
+  <!-- 只要引入这个，其他 three/parser/load_stl 会由它按 load_three_files 自动加载 -->
   <script src="js/stl_viewer.min.js"></script>
 </head>
-
 <body>
   <a href="index.html" class="back-btn">← Back</a>
-
-  <div class="topbar">
-    <div class="title">CivE265 Fall2025 - Enjoy your amazing creativity</div>
-  </div>
-
+  <div class="title-pill">CivE265 Fall2025 - Enjoy your amazing creativity</div>
+  <div class="id-pill" id="idpill">ID:</div>
   <div id="stl_cont"></div>
-  <div id="idBadge" class="id-badge"></div>
+  <div class="log" id="log">Loading...</div>
 
   <script>
+    const logEl = document.getElementById("log");
+    const log = (...args) => { logEl.textContent += "\n" + args.join(" "); console.log(...args); };
+
     const params = new URLSearchParams(location.search);
-    const modelId = params.get("model"); // 这里用 ID
-    if (!modelId) {
-      alert("Error: missing parameter ?model=ID");
+    const modelName = params.get("model");
+    if (!modelName) {
+      alert("Missing ?model=xxxxxxx");
       throw new Error("missing model");
     }
+    document.getElementById("idpill").textContent = `ID: ${modelName}`;
 
-    document.getElementById("idBadge").textContent = `ID: ${modelId}`;
+    // ✅ 关键：从 media.githubusercontent.com 读（支持 LFS 大文件）
+    const USER = "KangruiRen0102";
+    const REPO = "cive265-fall2025-gallery";
+    const BRANCH = "main";
 
-    const MODEL_BASE = "https://github.com/KangruiRen0102/cive265-fall2025-gallery/releases/download/models-v1";
-    const stlUrl = `${MODEL_BASE}/${modelName}.stl`;
-
+    const stlUrl = `https://media.githubusercontent.com/media/${USER}/${REPO}/${BRANCH}/models/${modelName}.stl`;
+    log("STL URL =", stlUrl);
 
     (async () => {
+      // 把远端 STL 转成 Blob URL（最稳，等同“本地上传”效果）
+      log("Fetching STL...");
       const res = await fetch(stlUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Failed to fetch STL: ${res.status} ${res.statusText}`);
+      log("Fetch status =", res.status);
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
 
       const buf = await res.arrayBuffer();
-      const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
+      log("STL bytes =", buf.byteLength);
 
+      const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
+      log("Blob URL ready.");
+
+      log("Init StlViewer...");
       const viewer = new StlViewer(document.getElementById("stl_cont"), {
         load_three_files: "js/",
         auto_resize: true,
@@ -87,14 +88,17 @@
           rotationx: -1.57
         }],
         all_loaded_callback: () => {
+          log("all_loaded_callback ✅");
           try { viewer.set_auto_zoom(); } catch(e) {}
         }
       });
 
       window.addEventListener("beforeunload", () => URL.revokeObjectURL(blobUrl));
+      log("Done ✅ If you still see blank, check Console errors.");
     })().catch(err => {
       console.error(err);
-      alert("Failed to load model. Please open Console for details.");
+      log("ERROR:", err.message || String(err));
+      alert("Model failed to load. Open DevTools Console.");
     });
   </script>
 </body>
