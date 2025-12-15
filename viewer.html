@@ -3,127 +3,128 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CivE265 Fall2025 Gallery - Viewer</title>
+  <title>CivE265 Fall2025 - Enjoy your amazing creativity</title>
 
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #e0e0e0;
-      font-family: Arial, sans-serif;
+    body { margin:0; overflow:hidden; background:#ffffff; font-family: Arial, sans-serif; }
+    #stl_cont { position:absolute; inset:0; width:100%; height:100%; }
+
+    .topbar{
+      position:absolute; top:14px; left:0; right:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none; z-index:1000;
     }
-
-    #stl_cont {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .btn {
-      position: absolute;
-      top: 20px;
-      padding: 10px 18px;
-      background: #333;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 8px;
-      z-index: 999;
-      font-weight: 700;
-      user-select: none;
-    }
-
-    .back-btn { left: 20px; }
-
-    .id-badge {
-      right: 20px;
-      background: #333;
-    }
-
-    .title-pill {
-      position: absolute;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.85);
-      color: #111;
-      padding: 10px 18px;
+    .title-pill{
+      pointer-events:none;
+      background: rgba(255,255,255,0.92);
       border-radius: 14px;
+      padding: 10px 18px;
       font-weight: 800;
-      z-index: 999;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      user-select: none;
-      max-width: calc(100% - 220px);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 22px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
     }
+
+    .back-btn{
+      position:absolute; top:18px; left:18px;
+      padding:10px 18px; background:#333; color:#fff;
+      text-decoration:none; border-radius:10px; z-index:1001;
+      font-weight:800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    }
+    .id-pill{
+      position:absolute; top:18px; right:18px;
+      padding:10px 16px; background:#333; color:#fff;
+      border-radius:10px; z-index:1001; font-weight:800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+    }
+
+    /* ✅ 不要左下角日志框：彻底不显示（默认不创建；即便残留也隐藏） */
+    #debugLog { display:none !important; }
   </style>
 
-  <!-- stl_viewer.min.js will load three.js + parser + loader from the folder below -->
+  <!-- 只引入 stl_viewer，Three 等依赖由它按 load_three_files 去拉 -->
   <script src="js/stl_viewer.min.js"></script>
 </head>
 
 <body>
-  <a href="index.html" class="btn back-btn">← Back</a>
-  <div class="title-pill">CivE265 Fall2025 - Enjoy your amazing creativity</div>
-  <div class="btn id-badge" id="idBadge">ID: —</div>
+  <a href="index.html" class="back-btn">← Back</a>
 
+  <div class="topbar">
+    <div class="title-pill">CivE265 Fall2025 - Enjoy your amazing creativity</div>
+  </div>
+
+  <div class="id-pill" id="idPill">ID: -</div>
   <div id="stl_cont"></div>
 
   <script>
-    // ===== 1) Read ID from URL =====
     const params = new URLSearchParams(location.search);
-    const modelName = params.get("model");
-
-    if (!modelName) {
-      alert("Missing URL parameter: ?model=xxxxxxx");
-      throw new Error("Missing model parameter");
+    const modelId = params.get("model");
+    if (!modelId) {
+      alert("Error: missing parameter ?model=xxxxxxx");
+      throw new Error("missing model");
     }
+    document.getElementById("idPill").textContent = `ID: ${modelId}`;
 
-    // Show ID
-    document.getElementById("idBadge").textContent = `ID: ${modelName}`;
-
-    // ===== 2) Build STL URL =====
-    // If you switched to GitHub Release assets/raw files, replace this line accordingly.
-    const stlUrl = `models/${modelName}.stl`;
+    // ✅ 保持你现在能跑的“GitHub raw media”规则（不要改回相对路径）
+    const stlUrl =
+      `https://media.githubusercontent.com/media/KangruiRen0102/cive265-fall2025-gallery/main/models/${modelId}.stl`;
 
     (async () => {
-      // ===== 3) Fetch STL -> Blob URL (more stable than direct URL in some setups) =====
+      // 先拉 STL -> Blob URL（更稳，避免 LFS/直链问题）
       const res = await fetch(stlUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`Failed to fetch STL: ${res.status} ${res.statusText}`);
-
       const buf = await res.arrayBuffer();
       const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
 
-      // ===== 4) Init Viewer =====
+      // ✅ 默认浅灰模型色（你要更浅/更深就改这里）
+      const MODEL_COLOR = "#b8b8b8";   // 浅灰
+      const BG_COLOR    = "#ffffff";   // 白底
+
       const viewer = new StlViewer(document.getElementById("stl_cont"), {
-        load_three_files: "js/",     // where three.min.js / parser.min.js / load_stl.min.js are
+        load_three_files: "js/",
         auto_resize: true,
         center_models: true,
-        bgcolor: "#e0e0e0",
+        bgcolor: BG_COLOR,
+
+        // ✅ 不要日志：很多版本 stl_viewer 有/没有这个字段都无所谓，但这里尽量关掉
+        // （如果你的版本不认，也不会报错）
+        show_status: false,
+        allow_drag_and_drop: false,
 
         models: [{
           id: 0,
           filename: blobUrl,
-          color: "#f2f2f2",          // cleaner light gray (instead of blue)
-          rotationx: -1.57
+          color: MODEL_COLOR,
+          // rotationx: -1.57,  // 需要的话再开
         }],
 
         all_loaded_callback: () => {
+          // ✅ 进入自动缩放
+          try { viewer.set_auto_zoom(); } catch(e) {}
+
+          // ✅ 再稍微拉远一点（不同版本方法名可能不同：都 try 一遍）
+          // 目标：让你一进去别贴脸，留一点边距
           try {
-            viewer.set_auto_zoom();  // fit to view
-            viewer.zoom_in(-30);     // pull back a bit (if it zooms the wrong way, change to +30)
-          } catch (e) {}
+            // 有些版本是 camera_zoom(倍率)，>1 拉近，<1 拉远
+            if (typeof viewer.camera_zoom === "function") viewer.camera_zoom(0.88);
+          } catch(e) {}
+
+          try {
+            // 有些版本是 set_zoom(倍率)
+            if (typeof viewer.set_zoom === "function") viewer.set_zoom(0.88);
+          } catch(e) {}
+
+          try {
+            // 有些版本可以直接调相机位置
+            if (viewer.camera && viewer.camera.position) viewer.camera.position.multiplyScalar(1.12);
+          } catch(e) {}
         }
       });
 
-      // Cleanup blob URL
       window.addEventListener("beforeunload", () => URL.revokeObjectURL(blobUrl));
     })().catch(err => {
       console.error(err);
-      alert("Failed to load model. Open DevTools Console for details.");
+      alert("Model load failed. Open DevTools Console to see the error.");
     });
   </script>
 </body>
