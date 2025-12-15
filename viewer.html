@@ -3,102 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CivE265 Fall2025 - Enjoy your amazing creativity</title>
-  <style>
-    body { margin:0; overflow:hidden; background:#e0e0e0; font-family: Arial, sans-serif; }
-    #stl_cont { position:absolute; inset:0; width:100%; height:100%; }
+  <title>CivE265 Fall2025 Gallery - Viewer</title>
 
-    .back-btn{
-      position:absolute; top:20px; left:20px;
-      padding:10px 18px; background:#333; color:#fff;
-      text-decoration:none; border-radius:10px; z-index:999; font-weight:700;
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #e0e0e0;
+      font-family: Arial, sans-serif;
     }
-    .title-pill{
-      position:absolute; top:18px; left:50%; transform:translateX(-50%);
-      background:rgba(255,255,255,.7); backdrop-filter: blur(6px);
-      padding:10px 18px; border-radius:14px; z-index:999; font-weight:800;
+
+    #stl_cont {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
     }
-    .id-pill{
-      position:absolute; top:20px; right:20px;
-      padding:10px 16px; background:#333; color:#fff;
-      border-radius:10px; z-index:999; font-weight:800;
+
+    .btn {
+      position: absolute;
+      top: 20px;
+      padding: 10px 18px;
+      background: #333;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      z-index: 999;
+      font-weight: 700;
+      user-select: none;
     }
-    .log{
-      position:absolute; left:20px; bottom:20px;
-      width:min(520px, calc(100vw - 40px));
-      background:rgba(0,0,0,.70); color:#fff; padding:12px 14px;
-      border-radius:12px; z-index:999; font-size:12px; line-height:1.35;
-      white-space:pre-wrap;
+
+    .back-btn { left: 20px; }
+
+    .id-badge {
+      right: 20px;
+      background: #333;
+    }
+
+    .title-pill {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      color: #111;
+      padding: 10px 18px;
+      border-radius: 14px;
+      font-weight: 800;
+      z-index: 999;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      user-select: none;
+      max-width: calc(100% - 220px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 
-  <!-- 只要引入这个，其他 three/parser/load_stl 会由它按 load_three_files 自动加载 -->
+  <!-- stl_viewer.min.js will load three.js + parser + loader from the folder below -->
   <script src="js/stl_viewer.min.js"></script>
 </head>
+
 <body>
-  <a href="index.html" class="back-btn">← Back</a>
+  <a href="index.html" class="btn back-btn">← Back</a>
   <div class="title-pill">CivE265 Fall2025 - Enjoy your amazing creativity</div>
-  <div class="id-pill" id="idpill">ID:</div>
+  <div class="btn id-badge" id="idBadge">ID: —</div>
+
   <div id="stl_cont"></div>
-  <div class="log" id="log">Loading...</div>
 
   <script>
-    const logEl = document.getElementById("log");
-    const log = (...args) => { logEl.textContent += "\n" + args.join(" "); console.log(...args); };
-
+    // ===== 1) Read ID from URL =====
     const params = new URLSearchParams(location.search);
     const modelName = params.get("model");
+
     if (!modelName) {
-      alert("Missing ?model=xxxxxxx");
-      throw new Error("missing model");
+      alert("Missing URL parameter: ?model=xxxxxxx");
+      throw new Error("Missing model parameter");
     }
-    document.getElementById("idpill").textContent = `ID: ${modelName}`;
 
-    // ✅ 关键：从 media.githubusercontent.com 读（支持 LFS 大文件）
-    const USER = "KangruiRen0102";
-    const REPO = "cive265-fall2025-gallery";
-    const BRANCH = "main";
+    // Show ID
+    document.getElementById("idBadge").textContent = `ID: ${modelName}`;
 
-    const stlUrl = `https://media.githubusercontent.com/media/${USER}/${REPO}/${BRANCH}/models/${modelName}.stl`;
-    log("STL URL =", stlUrl);
+    // ===== 2) Build STL URL =====
+    // If you switched to GitHub Release assets/raw files, replace this line accordingly.
+    const stlUrl = `models/${modelName}.stl`;
 
     (async () => {
-      // 把远端 STL 转成 Blob URL（最稳，等同“本地上传”效果）
-      log("Fetching STL...");
+      // ===== 3) Fetch STL -> Blob URL (more stable than direct URL in some setups) =====
       const res = await fetch(stlUrl, { cache: "no-store" });
-      log("Fetch status =", res.status);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+      if (!res.ok) throw new Error(`Failed to fetch STL: ${res.status} ${res.statusText}`);
 
       const buf = await res.arrayBuffer();
-      log("STL bytes =", buf.byteLength);
-
       const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
-      log("Blob URL ready.");
 
-      log("Init StlViewer...");
+      // ===== 4) Init Viewer =====
       const viewer = new StlViewer(document.getElementById("stl_cont"), {
-        load_three_files: "js/",
+        load_three_files: "js/",     // where three.min.js / parser.min.js / load_stl.min.js are
         auto_resize: true,
         center_models: true,
         bgcolor: "#e0e0e0",
+
         models: [{
           id: 0,
           filename: blobUrl,
-          color: "#1e90ff",
+          color: "#f2f2f2",          // cleaner light gray (instead of blue)
           rotationx: -1.57
         }],
+
         all_loaded_callback: () => {
-          log("all_loaded_callback ✅");
-          try { viewer.set_auto_zoom(); } catch(e) {}
+          try {
+            viewer.set_auto_zoom();  // fit to view
+            viewer.zoom_in(-30);     // pull back a bit (if it zooms the wrong way, change to +30)
+          } catch (e) {}
         }
       });
 
+      // Cleanup blob URL
       window.addEventListener("beforeunload", () => URL.revokeObjectURL(blobUrl));
-      log("Done ✅ If you still see blank, check Console errors.");
     })().catch(err => {
       console.error(err);
-      log("ERROR:", err.message || String(err));
-      alert("Model failed to load. Open DevTools Console.");
+      alert("Failed to load model. Open DevTools Console for details.");
     });
   </script>
 </body>
