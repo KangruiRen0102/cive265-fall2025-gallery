@@ -30,7 +30,7 @@
     }
     .thumb {
       width: 100%;
-      height: 160px;
+      height: 130px;           /* ✅ 比你160小，接近“最初版本”观感 */
       object-fit: cover;
       border-radius: 10px;
       background: #ddd;
@@ -43,8 +43,26 @@
       background: #f7f7f7;
       border: 1px solid rgba(0,0,0,0.08);
       text-align: center;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.5px;
+      font-size: 13px;
+    }
+    .title-box{
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #f7f7f7;
+      border: 1px solid rgba(0,0,0,0.08);
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.25;
+      opacity: 0.92;
+      word-break: break-word;
+      min-height: 34px;        /* ✅ 让卡片高度更整齐 */
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
   </style>
 </head>
@@ -54,11 +72,19 @@
 
   <div class="gallery" id="gallery"></div>
 
-  <!-- 方案A：继续使用 config.js -->
-  <script src="config.js"></script>
-
   <script>
     const gallery = document.getElementById('gallery');
+
+    function safePathId(id){
+      // 文件名里有空格/特殊字符时，保证路径正确
+      return encodeURIComponent(id);
+    }
+
+    async function loadText(url){
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return (await res.text()).trim();
+    }
 
     function makeCard(id) {
       const div = document.createElement('div');
@@ -68,7 +94,8 @@
       const img = document.createElement('img');
       img.className = 'thumb';
       img.alt = `ID ${id}`;
-      // 先尝试 png，再 fallback 到 jpg / jpeg
+
+      // thumbnail fallback: png -> jpg -> jpeg
       img.src = `thumbnails/${id}.png`;
       img.onerror = () => {
         if (img.dataset.triedJpg) return;
@@ -81,13 +108,42 @@
       idBox.className = 'id-box';
       idBox.textContent = id;
 
+      const titleBox = document.createElement('div');
+      titleBox.className = 'title-box';
+      titleBox.textContent = "Loading title...";
+
+      // ✅ 从 titles/<id>_title.txt 读取标题
+      (async () => {
+        try{
+          const t = await loadText(`titles/${safePathId(id)}_title.txt`);
+          titleBox.textContent = t || "(No title)";
+          img.alt = t || `ID ${id}`;
+        }catch(e){
+          titleBox.textContent = "(No title)";
+        }
+      })();
+
       div.appendChild(img);
       div.appendChild(idBox);
+      div.appendChild(titleBox);
       return div;
     }
 
-    // modelList 来自 config.js
-    modelList.forEach(id => gallery.appendChild(makeCard(id)));
+    // ✅ 读取 ids.txt 自动生成卡片
+    (async () => {
+      try{
+        const raw = await loadText("ids.txt");
+        const ids = raw
+          .split(/\r?\n/)
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        ids.forEach(id => gallery.appendChild(makeCard(id)));
+      }catch(e){
+        console.error(e);
+        alert("Failed to load ids.txt. Make sure ids.txt is in the same folder as index.html");
+      }
+    })();
   </script>
 </body>
 </html>

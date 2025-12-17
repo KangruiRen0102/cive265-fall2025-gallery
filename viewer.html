@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CivE265 Fall2025 - Enjoy your amazing creativity</title>
+  <title>CivE265 Fall2025 - Viewer</title>
 
   <style>
     body { margin:0; overflow:hidden; background:#ffffff; font-family: Arial, sans-serif; }
@@ -15,34 +15,45 @@
       pointer-events:none; z-index:1000;
     }
     .title-pill{
-      pointer-events:none;
+      pointer-events:auto;
+      cursor: pointer;
       background: rgba(255,255,255,0.92);
       border-radius: 14px;
       padding: 10px 18px;
-      font-weight: 800;
-      font-size: 22px;
+      font-weight: 900;
+      font-size: 20px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+      max-width: min(860px, 92vw);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: none;
     }
 
     .back-btn{
       position:absolute; top:18px; left:18px;
       padding:10px 18px; background:#333; color:#fff;
       text-decoration:none; border-radius:10px; z-index:1001;
-      font-weight:800;
+      font-weight:900;
       box-shadow: 0 6px 18px rgba(0,0,0,0.10);
     }
+
+    /* ✅ right-top download dyn */
     .id-pill{
       position:absolute; top:18px; right:18px;
       padding:10px 16px; background:#333; color:#fff;
-      border-radius:10px; z-index:1001; font-weight:800;
+      border-radius:10px; z-index:1001; font-weight:900;
       box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+      opacity: 0.92;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
     }
+    .id-pill:hover{ opacity: 1; }
 
-    /* ✅ 不要左下角日志框：彻底不显示（默认不创建；即便残留也隐藏） */
     #debugLog { display:none !important; }
   </style>
 
-  <!-- 只引入 stl_viewer，Three 等依赖由它按 load_three_files 去拉 -->
   <script src="js/stl_viewer.min.js"></script>
 </head>
 
@@ -50,10 +61,10 @@
   <a href="index.html" class="back-btn">← Back</a>
 
   <div class="topbar">
-    <div class="title-pill">CivE265 Fall2025 - Enjoy your amazing creativity</div>
+    <div class="title-pill" id="titlePill">Loading title...</div>
   </div>
 
-  <div class="id-pill" id="idPill">ID: -</div>
+  <div class="id-pill" id="idPill">Download .dyn ⬇</div>
   <div id="stl_cont"></div>
 
   <script>
@@ -63,61 +74,151 @@
       alert("Error: missing parameter ?model=xxxxxxx");
       throw new Error("missing model");
     }
-    document.getElementById("idPill").textContent = `ID: ${modelId}`;
 
-    // ✅ 保持你现在能跑的“GitHub raw media”规则（不要改回相对路径）
+    const titlePill = document.getElementById("titlePill");
+    const idPill = document.getElementById("idPill");
+
+    function safePathId(id){
+      return encodeURIComponent(id);
+    }
+
+    async function loadText(url){
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return (await res.text()).trim();
+    }
+
+    function escapeHtml(s){
+      return (s || "").replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
+
+    // ✅ load title
+    let currentTitle = modelId;
+    (async () => {
+      try{
+        const t = await loadText(`titles/${safePathId(modelId)}_title.txt`);
+        currentTitle = t || modelId;
+        titlePill.textContent = currentTitle;
+        document.title = `${currentTitle} - CivE265 Viewer`;
+        titlePill.title = "Click to open description";
+      }catch(e){
+        currentTitle = modelId;
+        titlePill.textContent = modelId;
+        document.title = `ID: ${modelId} - CivE265 Viewer`;
+        titlePill.title = "Click to open description";
+      }
+    })();
+
+    // ✅ click title -> open description window
+    titlePill.addEventListener("click", async () => {
+      let desc = "";
+      try{
+        desc = await loadText(`descriptions/${safePathId(modelId)}_description.txt`);
+        if (!desc) desc = "(No description)";
+      }catch(e){
+        desc = "(No description)";
+      }
+
+      const w = window.open("", "_blank", "width=760,height=620");
+      if (!w) return;
+      w.opener = null;
+
+      w.document.open();
+      w.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>${escapeHtml(currentTitle)}</title>
+          <style>
+            body{ font-family: Arial, sans-serif; margin: 20px; background:#fafafa; }
+            .wrap{ max-width: 920px; margin: 0 auto; }
+            h1{ font-size: 18px; margin: 0 0 8px 0; }
+            .id{ opacity:0.72; font-weight:900; margin-bottom: 14px; }
+            pre{
+              white-space: pre-wrap;
+              word-break: break-word;
+              background:#fff;
+              border:1px solid rgba(0,0,0,0.08);
+              border-radius: 12px;
+              padding: 14px;
+              line-height: 1.45;
+              font-size: 13px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            <h1>${escapeHtml(currentTitle)}</h1>
+            <div class="id">ID: ${escapeHtml(modelId)}</div>
+            <pre>${escapeHtml(desc)}</pre>
+          </div>
+        </body>
+        </html>
+      `);
+      w.document.close();
+    });
+
+    // ✅ 右上角：下载 dyn/<id>.dyn（本地仓库文件）
+    idPill.textContent = `Download ${modelId}.dyn ⬇`;
+    idPill.title = "Click to download the Dynamo (.dyn) file";
+
+    idPill.addEventListener("click", async () => {
+      try{
+        const dynUrl = `dyn/${safePathId(modelId)}.dyn`;  // ✅ 你的文件夹：dyn/id.dyn
+        const res = await fetch(dynUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Failed to fetch DYN: ${res.status} ${res.statusText}`);
+
+        const buf = await res.arrayBuffer();
+        const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
+
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${modelId}.dyn`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      }catch(err){
+        console.error(err);
+        alert("DYN download failed. Check if dyn/<id>.dyn exists.");
+      }
+    });
+
+    // ✅ STL viewer still uses your GitHub media rule (models/<id>.stl)
     const stlUrl =
       `https://media.githubusercontent.com/media/KangruiRen0102/cive265-fall2025-gallery/main/models/${modelId}.stl`;
 
     (async () => {
-      // 先拉 STL -> Blob URL（更稳，避免 LFS/直链问题）
       const res = await fetch(stlUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`Failed to fetch STL: ${res.status} ${res.statusText}`);
       const buf = await res.arrayBuffer();
       const blobUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
 
-      // ✅ 默认浅灰模型色（你要更浅/更深就改这里）
-      const MODEL_COLOR = "#b8b8b8";   // 浅灰
-      const BG_COLOR    = "#ffffff";   // 白底
+      const MODEL_COLOR = "#b8b8b8";
+      const BG_COLOR    = "#ffffff";
 
       const viewer = new StlViewer(document.getElementById("stl_cont"), {
         load_three_files: "js/",
         auto_resize: true,
         center_models: true,
         bgcolor: BG_COLOR,
-
-        // ✅ 不要日志：很多版本 stl_viewer 有/没有这个字段都无所谓，但这里尽量关掉
-        // （如果你的版本不认，也不会报错）
         show_status: false,
         allow_drag_and_drop: false,
-
         models: [{
           id: 0,
           filename: blobUrl,
           color: MODEL_COLOR,
-          // rotationx: -1.57,  // 需要的话再开
         }],
-
         all_loaded_callback: () => {
-          // ✅ 进入自动缩放
           try { viewer.set_auto_zoom(); } catch(e) {}
-
-          // ✅ 再稍微拉远一点（不同版本方法名可能不同：都 try 一遍）
-          // 目标：让你一进去别贴脸，留一点边距
-          try {
-            // 有些版本是 camera_zoom(倍率)，>1 拉近，<1 拉远
-            if (typeof viewer.camera_zoom === "function") viewer.camera_zoom(0.88);
-          } catch(e) {}
-
-          try {
-            // 有些版本是 set_zoom(倍率)
-            if (typeof viewer.set_zoom === "function") viewer.set_zoom(0.88);
-          } catch(e) {}
-
-          try {
-            // 有些版本可以直接调相机位置
-            if (viewer.camera && viewer.camera.position) viewer.camera.position.multiplyScalar(1.12);
-          } catch(e) {}
+          try { if (typeof viewer.camera_zoom === "function") viewer.camera_zoom(0.88); } catch(e) {}
+          try { if (typeof viewer.set_zoom === "function") viewer.set_zoom(0.88); } catch(e) {}
+          try { if (viewer.camera && viewer.camera.position) viewer.camera.position.multiplyScalar(1.12); } catch(e) {}
         }
       });
 

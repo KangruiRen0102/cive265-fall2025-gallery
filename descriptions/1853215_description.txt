@@ -1,0 +1,13 @@
+My pavilion is a modern teepee-inspired structure made from angled steel rods resting on a wooden slab. The design goal is to create a small arrival landmark for the Week of Welcome, something visually striking from the outside and calming when you step onto the slab. As you walk around the pavilion, the rods frame shifting views, and when you stand inside, the lines converge toward the top, creating a sense of focus and shelter without fully enclosing the space.
+
+I used parametric controls to explore and refine the form. Sliders control:
+• Number of rods, adjusting openness and structural density.
+• Diameter of the teepee, affecting interior space and footprint.
+• Height of the teepee, shaping how tall, iconic, or intimate the pavilion feels.
+• Rod radius, changing the visual weight of the steel.
+• Slab length, width, and thickness, defining the wooden base.
+
+For class and instance implementation, I created two Python classes: CircularRod for the steel rods and Slab for the timber base. Each class generates geometry and computes its own material volume. The FINAL TARGET script produces a full series of rod instances using lists of bottom and top points, while the slab script outputs a single wooden platform.
+Quantity take-offs are fully parametric: rod volumes and slab volume are calculated through each class, extracted using Solid.Volume, and summed in Dynamo. Any change to a slider immediately updates these values, ensuring accurate material totals.
+
+Overall, adjusting parameters allowed me to test many design variations and arrive at a pavilion that feels welcoming, visually clean, and structurally understandable, while remaining fully open and 3D-printable.
