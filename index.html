@@ -1,149 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CivE265 Fall2025 - STL Gallery</title>
-
-  <style>
-    body { font-family: Arial, sans-serif; padding: 24px; background: #f0f0f0; margin:0; }
-    h1 { text-align:center; margin: 18px 0 26px; }
-
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 18px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .card {
-      background: white;
-      padding: 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
-      border: 1px solid rgba(0,0,0,0.06);
-    }
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-    }
-    .thumb {
-      width: 100%;
-      height: 130px;           /* ✅ 比你160小，接近“最初版本”观感 */
-      object-fit: cover;
-      border-radius: 10px;
-      background: #ddd;
-      display:block;
-    }
-    .id-box{
-      margin-top: 10px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      background: #f7f7f7;
-      border: 1px solid rgba(0,0,0,0.08);
-      text-align: center;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      font-size: 13px;
-    }
-    .title-box{
-      margin-top: 8px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      background: #f7f7f7;
-      border: 1px solid rgba(0,0,0,0.08);
-      text-align: center;
-      font-weight: 700;
-      font-size: 13px;
-      line-height: 1.25;
-      opacity: 0.92;
-      word-break: break-word;
-      min-height: 34px;        /* ✅ 让卡片高度更整齐 */
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>CivE265 Fall2025 - Enjoy your amazing creativity</h1>
-
-  <div class="gallery" id="gallery"></div>
-
-  <script>
-    const gallery = document.getElementById('gallery');
-
-    function safePathId(id){
-      // 文件名里有空格/特殊字符时，保证路径正确
-      return encodeURIComponent(id);
-    }
-
-    async function loadText(url){
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      return (await res.text()).trim();
-    }
-
-    function makeCard(id) {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.onclick = () => location.href = `viewer.html?model=${encodeURIComponent(id)}`;
-
-      const img = document.createElement('img');
-      img.className = 'thumb';
-      img.alt = `ID ${id}`;
-
-      // thumbnail fallback: png -> jpg -> jpeg
-      img.src = `thumbnails/${id}.png`;
-      img.onerror = () => {
-        if (img.dataset.triedJpg) return;
-        img.dataset.triedJpg = "1";
-        img.src = `thumbnails/${id}.jpg`;
-        img.onerror = () => { img.src = `thumbnails/${id}.jpeg`; };
-      };
-
-      const idBox = document.createElement('div');
-      idBox.className = 'id-box';
-      idBox.textContent = id;
-
-      const titleBox = document.createElement('div');
-      titleBox.className = 'title-box';
-      titleBox.textContent = "Loading title...";
-
-      // ✅ 从 titles/<id>_title.txt 读取标题
-      (async () => {
-        try{
-          const t = await loadText(`titles/${safePathId(id)}_title.txt`);
-          titleBox.textContent = t || "(No title)";
-          img.alt = t || `ID ${id}`;
-        }catch(e){
-          titleBox.textContent = "(No title)";
-        }
-      })();
-
-      div.appendChild(img);
-      div.appendChild(idBox);
-      div.appendChild(titleBox);
-      return div;
-    }
-
-    // ✅ 读取 ids.txt 自动生成卡片
-    (async () => {
-      try{
-        const raw = await loadText("ids.txt");
-        const ids = raw
-          .split(/\r?\n/)
-          .map(s => s.trim())
-          .filter(Boolean);
-
-        ids.forEach(id => gallery.appendChild(makeCard(id)));
-      }catch(e){
-        console.error(e);
-        alert("Failed to load ids.txt. Make sure ids.txt is in the same folder as index.html");
-      }
-    })();
-  </script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#24453d" />
+    <title>Pavilion studies · CIV E 265 exhibition</title>
+    <link rel="stylesheet" href="gallery.css" />
+  </head>
+  <body>
+    <a class="skip" href="#collection">Skip to projects</a>
+    <header class="mast">
+      <a class="identity" href="index.html">
+        CIV E 265
+        <span>/</span>
+        Design exhibition
+      </a>
+      <nav class="mast-nav">
+        <a href="preview.html">Preview your model</a>
+        <span>University of Alberta</span>
+      </nav>
+    </header>
+    <main class="wrap">
+      <section class="intro" aria-labelledby="exhibition-title">
+        <div>
+          <p class="kicker">Fall 2025 · Student work</p>
+          <h1 id="exhibition-title">
+            Pavilion
+            <br />
+            <i>studies</i>
+          </h1>
+          <p class="lead">
+            Parametric pavilion designs for the Week of Welcome, built by CIV E
+            265 students in Dynamo.
+          </p>
+          <a class="browse" href="#collection">
+            Explore the collection
+            <span aria-hidden="true">↓</span>
+          </a>
+        </div>
+        <a class="feature" id="featured" hidden>
+          <img id="featured-image" alt="" fetchpriority="high" />
+          <div>
+            <span id="featured-title">Open project</span>
+            <span aria-hidden="true">↗</span>
+          </div>
+        </a>
+      </section>
+      <section
+        id="collection"
+        class="collection"
+        aria-labelledby="collection-title"
+      >
+        <div class="toolbar">
+          <div>
+            <p class="kicker" id="count" role="status">Loading projects…</p>
+            <h2 id="collection-title">The collection</h2>
+          </div>
+          <form role="search" onsubmit="return false">
+            <label for="search">Find a project</label>
+            <input
+              id="search"
+              type="search"
+              placeholder="Search title or project ID"
+              autocomplete="off"
+            />
+          </form>
+        </div>
+        <div id="cards" class="cards"></div>
+        <p id="message" role="status"></p>
+        <nav id="paging" class="paging" aria-label="Collection pages" hidden>
+          <button id="prev">← Previous</button>
+          <span id="page"></span>
+          <button id="next">Next →</button>
+        </nav>
+      </section>
+    </main>
+    <footer class="mast">
+      <span>CIV E 265 · University of Alberta</span>
+      <a href="#exhibition-title">Back to top ↑</a>
+    </footer>
+    <noscript>
+      This collection needs JavaScript to load its project index.
+    </noscript>
+    <script type="module" src="gallery.js"></script>
+  </body>
 </html>
