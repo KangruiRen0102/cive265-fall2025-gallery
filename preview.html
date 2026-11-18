@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Check a model · CIV E 265</title>
+    <link rel="stylesheet" href="gallery.css" />
+  </head>
+  <body>
+    <header class="mast">
+      <a class="identity" href="index.html">
+        CIV E 265
+        <span>/</span>
+        Design exhibition
+      </a>
+      <a href="index.html#collection">Collection</a>
+    </header>
+    <main class="wrap project">
+      <p class="kicker">Submission check</p>
+      <h1>Preview your model</h1>
+      <p>
+        Open your exported file on this device. Compare the whole pavilion with
+        your saved Dynamo design from above and from the side. A GLB can include
+        material colours and transparency. An STL shows geometry in a single
+        colour.
+      </p>
+      <div class="file-tools">
+        <div>
+          <label for="file">Choose a self-contained GLB or STL</label>
+          <input id="file" type="file" accept=".glb,.stl" />
+        </div>
+        <div id="axis-row" hidden>
+          <label for="axis">STL vertical axis</label>
+          <select id="axis">
+            <option value="z">Z up · course export</option>
+            <option value="y">Y up · 2025 archive</option>
+          </select>
+        </div>
+        <button id="sample" class="action secondary" type="button">
+          Try a colour sample (8 kB)
+        </button>
+      </div>
+      <p class="privacy">The selected file stays in your browser.</p>
+      <p id="progress" role="status" aria-live="polite"></p>
+      <div
+        id="viewport"
+        hidden
+        tabindex="0"
+        aria-label="3D model. Use arrow keys to orbit, plus or minus to zoom, and Home to reset."
+      ></div>
+      <div id="controls" class="controls" hidden>
+        <button id="zoom-in" disabled>Zoom in</button>
+        <button id="zoom-out" disabled>Zoom out</button>
+        <button id="reset">Reset view</button>
+        <button id="clear">Close file</button>
+        <span>
+          Drag or use arrow keys to rotate. Scroll or use + / − to zoom.
+        </span>
+      </div>
+    </main>
+    <footer class="mast">
+      <span>CIV E 265 · University of Alberta</span>
+      <a href="index.html">Return to exhibition →</a>
+    </footer>
+    <script type="module" src="local-model.js"></script>
+  </body>
+</html>
